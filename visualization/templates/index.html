@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Insights Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.0.0/wordcloud2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@3.9.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.7/countUp.umd.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background: white;
+            padding: 2rem 1.5rem;
+            border-radius: 0 1rem 1rem 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-group .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .filter-group select {
+            border-radius: 0.5rem;
+            border: 1px solid #ced4da;
+            padding: 0.5rem;
+            width: 100%;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .content {
+            margin-left: 300px;
+            padding: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .metric-card {
+            height: 130px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        
+        .metric-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-card .label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .chart-card {
+            padding: 3.0rem;
+            height: 400px;
+        }
+        .expand-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        .fullscreen-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            text-align: center;
+            padding: 50px;
+        }
+        
+        .fullscreen-modal canvas {
+            max-width: 90%;
+            max-height: 80vh;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: red;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 50%;
+        }
+        
+        .chart-card .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .table-card {
+            max-height: 400px;
+            overflow: hidden;
+        }
+        
+        .table-scroll {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        
+        .table-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .table-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        .table-scroll::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .table th {
+            position: sticky;
+            top: 0;
+            background: var(--primary-color);
+            color: white;
+            z-index: 10;
+        }
+        
+        .btn-reset {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            width: 100%;
+            transition: background-color 0.2s ease;
+        }
+        
+        .btn-reset:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 240px;
+            }
+            .content {
+                margin-left: 260px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .content {
+                margin-left: 0;
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .mobile-toggle {
+                display: block;
+                position: fixed;
+                bottom: 1rem;
+                left: 1rem;
+                z-index: 1001;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 3rem;
+                height: 3rem;
+                font-size: 1.2rem;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+        }
+        .expand-icon {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+        
+        .expand-icon:hover {
+            color: #000;
+        }
+        /* Sidebar Styling */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background:rgb(204, 250, 246); /* Dark Blue */
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Sidebar Header */
+        .sidebar-header h4 {
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            color: #bdc3c7;
+        }
+
+        /* Label Styling */
+        .sidebar label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ecf0f1;
+            margin-top: 10px;
+        }
+
+        /* Dropdown Styling */
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solidrgb(245, 245, 245);
+            border-radius: 5px;
+            background: white;
+            color: #333;
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        .filter-input:focus {
+            border-color:rgb(245, 245, 245);
+            outline: none;
+            box-shadow: 0px 0px 5px rgb(245, 245, 245);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn-primary {
+            background:rgb(59, 8, 245);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background:rgb(59, 8, 245);
+        }
+
+        /* Responsive Sidebar for Mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                box-shadow: none;
+            }
+
+            .btn {
+                font-size: 0.9rem;
+            }
+        }
+        .fullscreen-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .fullscreen-content {
+            width: 90%;
+            height: 90%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .close-icon {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+        }
+        
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+
+
+        
+    </style>
+</head>
+<body>
+    <button class="mobile-toggle d-md-none" onclick="toggleSidebar()">
+        <i class="fas fa-sliders-h"></i>
+    </button>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h4>Filters</h4>
+            <p class="text-muted small">Apply filters to analyze data...</p>
+        </div>
+        <div>
+            <label>Sector:</label>
+            <select id="sectorFilter" class="filter-input"><option value="">Select Sector</option></select>
+        
+            <label>Country:</label>
+            <select id="countryFilter" class="filter-input"><option value="">Select Country</option></select>
+        
+            <label>Topic:</label>
+            <select id="topicFilter" class="filter-input"><option value="">Select Topic</option></select>
+        
+            <label>Region:</label>
+            <select id="regionFilter" class="filter-input"><option value="">Select Region</option></select>
+        
+            <label>Pestle:</label>
+            <select id="pestleFilter" class="filter-input"><option value="">Select Pestle</option></select>
+        
+            <label>Source:</label>
+            <select id="sourceFilter" class="filter-input"><option value="">Select Source</option></select>
+            <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+            <button id="resetFilters" class="btn btn-primary">Reset Filters</button>
+            
+
+        </div>
+    </div>
+    <div class="content">
+        <div class="dashboard-header text-center">
+            <h1><i class="fas fa-chart-line me-3"></i>Business Insights Dashboard</h1>
+            <p class="lead">Analyze global trends and predictions</p>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card metric-card bg-primary text-white">
+                    <div class="icon"><i class="fas fa-database"></i></div>
+                    <div class="value" id="totalRecords">{{ total_records }}</div>
+                    <div class="label">Total Records</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card metric-card bg-success text-white">
+                    <div class="icon"><i class="fas fa-industry"></i></div>
+                    <div class="value" id="uniqueSectors">{{ unique_sectors }}</div>
+                    <div class="label">Unique Sectors</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card metric-card bg-info text-white">
+                    <div class="icon"><i class="fas fa-globe-americas"></i></div>
+                    <div class="value" id="uniqueCountries">{{ unique_countries }}</div>
+                    <div class="label">Unique Countries</div>
+                </div>
+            </div>
+        </div>
+        <div class="card table-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-newspaper me-2"></i>Latest Insights</h5>
+                <div class="table-scroll" id="scrollableTable">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Sector</th>
+                                <th>Country</th>
+                                <th>Published</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in latest_insights %}
+                            <tr>
+                                <td><a href="{{ item.url }}" target="_blank" class="text-primary">{{ item.title }}</a></td>
+                                <td>{{ item.sector }}</td>
+                                <td>{{ item.country }}</td>
+                                <td>{{ item.published }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Intensity Trend</h5>
+                    <i class="fas fa-expand expand-icon" onclick="openFullScreen('intensityChart')"></i>
+                    <canvas id="intensityChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <h5 class="card-title"><i class="fas fa-chart-bar me-2"></i>Likelihood Distribution</h5>
+                    <i class="fas fa-expand expand-icon" onclick="openFullScreen('likelihoodChart')"></i>
+                    <canvas id="likelihoodChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Relevance Analysis</h5>
+                    <i class="fas fa-expand expand-icon" onclick="openFullScreen('relevanceChart')"></i>
+                    <canvas id="relevanceChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <h5 class="card-title"><i class="fas fa-calendar-alt me-2"></i>Country Distribution</h5>
+                    <i class="fas fa-expand expand-icon" onclick="openFullScreen('mapChart')"></i>
+                    <canvas id="mapChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <h5 class="card-title"><i class="fas fa-globe me-2"></i>Regional Distribution</h5>
+                    <i class="fas fa-expand expand-icon" onclick="openFullScreen('geoChart')"></i>
+                    <canvas id="geoChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card chart-card">
+                    <h5 class="card-title"><i class="fas fa-tag me-2"></i>Topics Distribution</h5>
+                    <i class="fas fa-expand expand-icon" onclick="openFullScreen('topicsChart')"></i>
+                    <canvas id="topicsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="fullscreenModal" class="fullscreen-modal">
+        <div class="fullscreen-content">
+            <i class="fas fa-times close-icon" onclick="closeFullScreen()"></i>
+            <canvas id="fullScreenChart"></canvas>
+        </div>
+    </div>
+
+    
+    <script>
+        let chartInstances = {};
+
+        document.addEventListener("DOMContentLoaded", function () {
+            createChart("intensityChart", "bubble", {{ intensity_labels|safe }}, {{ intensity_values|safe }}, "Intensity");
+            createChart("likelihoodChart", "bar", {{ likelihood_labels|safe }}, {{ likelihood_values|safe }}, "Likelihood");
+            createChart("relevanceChart", "line", {{ relevance_labels|safe }}, {{ relevance_values|safe }}, "Relevance");
+            createChart("mapChart", "line", {{ country_labels|safe }}, {{ country_values|safe }}, "Country");
+            createChart("topicsChart", "pie", {{ topic_labels|safe }}, {{ topic_counts|safe }}, "Topics");
+            createChart("geoChart", "bar", {{ region_labels|safe }}, {{ region_counts|safe }}, "Region");
+
+            startCounting("totalRecords", {{ total_records }});
+            startCounting("uniqueSectors", {{ unique_sectors }});
+            startCounting("uniqueCountries", {{ unique_countries }});
+
+            autoScrollTable();
+        });
+
+        function createChart(elementId, chartType, labels, data, label) {
+            let ctx = document.getElementById(elementId)?.getContext("2d");
+            if (!ctx) return;
+
+            if (chartInstances[elementId]) {
+                chartInstances[elementId].destroy();
+            }
+
+            let parsedLabels = Array.isArray(labels) ? labels : JSON.parse(labels || "[]");
+            let parsedData = Array.isArray(data) ? data : JSON.parse(data || "[]");
+
+            let backgroundColors = generateUniqueColors(parsedLabels.length);
+
+            let datasets = [{
+                label: label,
+                data: parsedData,
+                backgroundColor: chartType === 'line' ? 'rgba(67, 97, 238, 0.2)' : backgroundColors,
+                borderColor: chartType === 'line' ? 'rgba(67, 97, 238, 1)' : backgroundColors,
+                borderWidth: 2,
+                tension: chartType === 'line' ? 0.4 : 0,
+                fill: chartType === 'line'
+            }];
+
+            chartInstances[elementId] = new Chart(ctx, {
+                type: chartType,
+                data: { labels: parsedLabels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: chartType === 'pie' ? 'right' : 'top' } }
+                }
+            });
+        }
+
+        function startCounting(id, endValue) {
+            const counter = new countUp.CountUp(id, endValue, { duration: 2, separator: "," });
+            if (!counter.error) counter.start();
+        }
+
+        function autoScrollTable() {
+            let tableDiv = document.getElementById("scrollableTable");
+            if (!tableDiv) return;
+
+            let scrollSpeed = 1, scrollInterval = 60, paused = false;
+
+            tableDiv.addEventListener('mouseenter', () => paused = true);
+            tableDiv.addEventListener('mouseleave', () => paused = false);
+
+            setInterval(() => {
+                if (!paused) {
+                    tableDiv.scrollTop = (tableDiv.scrollTop + scrollSpeed) % tableDiv.scrollHeight;
+                }
+            }, scrollInterval);
+        }
+
+        function generateUniqueColors(count) {
+            let baseColors = ['rgba(67, 97, 238, 0.7)', 'rgba(72, 149, 239, 0.7)', 'rgba(76, 201, 240, 0.7)'];
+            return Array.from({ length: count }, (_, i) => baseColors[i % baseColors.length]);
+        }
+
+        let fullScreenChartInstance = null;
+
+        function openFullScreen(chartId) {
+            document.getElementById("fullscreenModal").style.display = "flex";   
+            let originalChart = Chart.getChart(chartId); 
+            if (!originalChart) {
+                console.error("Original chart not found:", chartId);
+                return;
+            }    
+            let ctx = document.getElementById("fullScreenChart").getContext("2d");              
+            if (fullScreenChartInstance) {
+                fullScreenChartInstance.destroy();
+            }
+            let newChartData = JSON.parse(JSON.stringify(originalChart.data));
+            fullScreenChartInstance = new Chart(ctx, {
+                type: originalChart.config.type,
+                data: newChartData,
+                options: {
+                    ...originalChart.options,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: "#fff", 
+                            },
+                        },
+                    },
+                },
+            });
+        }
+    
+        function closeFullScreen() {
+            document.getElementById("fullscreenModal").style.display = "none";
+            if (fullScreenChartInstance) {
+                fullScreenChartInstance.destroy();
+                fullScreenChartInstance = null;
+            }
+        }
+
+        $(document).ready(function () {
+            function fetchFilteredData() {
+                let filters = {
+                    sector: $("#sectorFilter").val().trim(),
+                    country: $("#countryFilter").val().trim(),
+                    topic: $("#topicFilter").val().trim(),
+                    region: $("#regionFilter").val().trim(),
+                    pestle: $("#pestleFilter").val().trim(),
+                    source: $("#sourceFilter").val().trim(),
+                };
+        
+                $.ajax({
+                    url: "/filter/",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(filters),
+                    headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                    success: updateCharts,
+                    error: (xhr) => console.error("AJAX Error:", xhr.responseText)
+                });
+            }
+        
+            $("#applyFilters").on("click", fetchFilteredData);
+            $("#resetFilters").on("click", function () {
+                $(".filter-input").val(""); 
+                fetchFilteredData(); 
+            });
+        
+            function updateCharts(data) {
+                console.log("Received Data:", data);
+            
+                if (!data) {
+                    console.error("No data received!");
+                    return;
+                }
+            
+                let keys = ["intensity", "likelihood", "relevance", "country", "region", "topic"];
+            
+                keys.forEach(key => {
+                    let chart = chartInstances[`${key}Chart`];
+            
+                    if (chart) {
+                        let labelsKey = `${key}_labels`; 
+                        let valuesKey = `${key}_values`;  
+            
+                        console.log(`Updating ${key} chart`, data[labelsKey], data[valuesKey]);
+            
+                        if (!data[labelsKey] || !data[valuesKey]) {
+                            console.warn(`Missing labels or values for ${key}`);
+                            return;
+                        }
+            
+                        chart.data.labels = data[labelsKey]; 
+                        chart.data.datasets[0].data = data[valuesKey];
+                        chart.update();
+                    }
+                });
+            }
+            
+            
+        });
+
+        async function loadJSON() {
+            try {
+                let response = await fetch("/jsondata/");
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+                let data = await response.json();
+                ["sector", "country", "topic", "region", "pestle", "source"].forEach(key => {
+                    let select = document.getElementById(`${key}Filter`);
+                    if (!select) return;
+                    new Set(data.map(item => item[key]).filter(Boolean)).forEach(value => {
+                        let option = document.createElement("option");
+                        option.value = value;
+                        option.textContent = value;
+                        select.appendChild(option);
+                    });
+                });
+            } catch (error) {
+                console.error("Error loading JSON:", error);
+            }
+        }
+
+        loadJSON();
+
+        
+        
+    </script>
+</body>
+</html>
