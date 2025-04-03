@@ -48,7 +48,7 @@ httpx==0.28.1
 huggingface-hub==0.28.1
 idna==3.10
 importlib_metadata==8.5.0
-importlib_resources @ file:///home/conda/feedstock_root/build_artifacts/importlib_resources_1736252299705/work
+importlib_resources
 ipykernel==6.29.5
 ipywidgets==8.1.5
 isoduration==20.11.0
@@ -137,7 +137,7 @@ sympy==1.13.1
 tensorboard==2.18.0
 tensorboard-data-server==0.7.2
 tensorflow-addons==0.22.0
-tensorflow-datasets @ file:///home/conda/feedstock_root/build_artifacts/tensorflow-datasets_1677527310957/work
+tensorflow-datasets
 tensorflow-io-gcs-filesystem==0.31.0
 tensorflow-metadata==1.16.1
 tensorflow_intel==2.18.0
