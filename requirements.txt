@@ -12,7 +12,7 @@ attrs==24.3.0
 babel==2.16.0
 beautifulsoup4==4.12.3
 bleach==6.2.0
-certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1739515848642/work/certifi
+certifi
 cffi==1.17.1
 charset-normalizer==3.4.1
 click==8.1.8
@@ -50,7 +50,6 @@ idna==3.10
 importlib_metadata==8.5.0
 importlib_resources @ file:///home/conda/feedstock_root/build_artifacts/importlib_resources_1736252299705/work
 ipykernel==6.29.5
-ipython==8.18.1
 ipywidgets==8.1.5
 isoduration==20.11.0
 jedi==0.19.2
@@ -60,7 +59,6 @@ json5==0.10.0
 jsonpointer==3.0.0
 jsonschema==4.23.0
 jsonschema-specifications==2024.10.1
-jupyter==1.1.1
 jupyter-console==6.6.3
 jupyter-events==0.11.0
 jupyter-lsp==2.2.5
@@ -90,7 +88,6 @@ nbconvert==7.16.5
 nbformat==5.10.4
 nest-asyncio==1.6.0
 networkx==3.2.1
-notebook==7.3.2
 notebook_shim==0.2.4
 numpy==2.0.2
 opt_einsum==3.4.0
@@ -139,7 +136,6 @@ stack-data==0.6.3
 sympy==1.13.1
 tensorboard==2.18.0
 tensorboard-data-server==0.7.2
-tensorflow==2.18.0
 tensorflow-addons==0.22.0
 tensorflow-datasets @ file:///home/conda/feedstock_root/build_artifacts/tensorflow-datasets_1677527310957/work
 tensorflow-io-gcs-filesystem==0.31.0
@@ -152,9 +148,6 @@ tinycss2==1.4.0
 tokenizers==0.21.0
 toml==0.10.2
 tomli==2.2.1
-torch==2.5.1+cu121
-torchaudio==2.5.1+cu121
-torchvision==0.20.1+cu121
 tornado==6.4.2
 tqdm==4.67.1
 traitlets==5.14.3
